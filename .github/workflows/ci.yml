@@ -1,0 +1,50 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install langgraph crewai semgrep pytest
+    
+    - name: Install Semgrep
+      run: |
+        pip install semgrep
+    
+    - name: Configure CMake
+      run: cmake --preset=default
+    
+    - name: Build
+      run: cmake --build --preset=default-build
+    
+    - name: Run tests (CTest)
+      run: ctest --preset=default-test --output-on-failure
+    
+    - name: Run Semgrep security check
+      run: semgrep --config=security-standards/ --error .
+    
+    - name: Create package (CPack)
+      run: cpack --preset=default
+    
+    - name: Upload package artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-audit-agent-package
+        path: security-audit-agent-*.tar.gz

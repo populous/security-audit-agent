@@ -34,7 +34,7 @@ class TestEndToEnd:
         # Simulate the complete verdict flow
         state = {
             "repo_path": "/tmp/test",
-            "semgrep_json": "",
+            "semgrep_json": json.dumps({"results": []}),
             "crew_result": None,
             "findings": sample_mapped_findings,
             "mapped_findings": sample_mapped_findings,
