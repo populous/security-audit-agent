@@ -1,0 +1,55 @@
+# security-standards/sec-03-1.yml
+# SEC-03.1 인증 토큰 저장 관련 Semgrep 규칙
+
+rules:
+  - id: sec-03-1-no-hardcoded-token
+    patterns:
+      - pattern: |
+          $TOKEN = "..."
+      - pattern-not: |
+          $TOKEN = "placeholder"
+      - pattern-not: |
+          $TOKEN = "example"
+    message: "인증 토큰이 소스코드에 하드코딩됨 (SEC-03.1 위반)"
+    languages: [python]
+    severity: ERROR
+    metadata:
+      clause_id: "SEC-03.1"
+      evidence_required:
+        - "인가 미들웨어 호출"
+        - "암호화 저장소 사용"
+      fix_guidance: "환경변수/시크릿 관리 시스템으로 이동"
+      references:
+        - "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html"
+
+  - id: sec-03-1-no-token-in-env
+    patterns:
+      - pattern: |
+          os.environ["$VAR"]
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: ".*(TOKEN|SECRET|KEY|PASSWORD).*"
+    message: "민감정보가 환경변수에 평문으로 저장됨 (SEC-03.1 위반)"
+    languages: [python]
+    severity: WARNING
+    metadata:
+      clause_id: "SEC-03.1"
+      evidence_required:
+        - "시크릿 관리 시스템 사용 여부 확인"
+      fix_guidance: "Vault, AWS Secrets Manager 등 시크릿 관리 시스템 사용"
+
+  - id: sec-03-1-no-token-in-log
+    patterns:
+      - pattern: |
+          logging.$METHOD(..., $TOKEN, ...)
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: "(info|debug|warning|error|critical)"
+    message: "로그에 토큰이 포함될 수 있음 (SEC-03.1 위반)"
+    languages: [python]
+    severity: WARNING
+    metadata:
+      clause_id: "SEC-03.1"
+      evidence_required:
+        - "로그 필터링 함수 사용 여부 확인"
+      fix_guidance: "로그 출력 전 마스킹/필터링 함수 적용"
